@@ -1,6 +1,7 @@
 #ifndef APP_INFO_UI_HPP
 #define APP_INFO_UI_HPP
 
+#include <giomm/settings.h>
 #include <gtkmm/builder.h>
 #include <gtkmm/grid.h>
 #include <gtkmm/image.h>
@@ -27,6 +28,7 @@ class AppInfoUi : public Gtk::Grid {
   Gtk::Label* app_name = nullptr;
   Gtk::Scale* volume = nullptr;
   Gtk::ToggleButton* mute = nullptr;
+  Gtk::ToggleButton* blacklist = nullptr;
   Gtk::Image* mute_icon = nullptr;
   Gtk::Label* format = nullptr;
   Gtk::Label* rate = nullptr;
@@ -43,14 +45,16 @@ class AppInfoUi : public Gtk::Grid {
  private:
   std::string log_tag = "app_info_ui: ";
 
-  bool running = true;
+  bool running = true, enabled = true, blacklisted = true, pre_bl_state = true;
 
   sigc::connection enable_connection;
   sigc::connection volume_connection;
   sigc::connection mute_connection;
+  sigc::connection blacklist_connection;
   sigc::connection timeout_connection;
 
   PulseManager* pm = nullptr;
+  Glib::RefPtr<Gio::Settings> settings;
 
   void init_widgets();
 

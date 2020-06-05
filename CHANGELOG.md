@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### Added
+
+- PulseEffects now searches for presets in /etc/PulseEffects and directories specified by \$XDG_CONFIG_DIRS environment
+  variable.
+- Our interface now shows third party Plugins credits.
+- Each plugin now has a reset button
+- Improved convolver impulse response files plot
+- Applications entry now have a blacklist button to make it easier to blacklist an application the user does not want
+  effects to be applied.
+
+### Fixed
+
+- PulseEffects no longer crashes when an empty or corrupted preset is provided.
+- Fixed laxity setting not being applied in the deesser
+
 ## [4.7.2]
 
 ### Added

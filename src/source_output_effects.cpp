@@ -5,7 +5,7 @@
 namespace {
 
 void on_message_element(const GstBus* gst_bus, GstMessage* message, SourceOutputEffects* soe) {
-  auto src_name = GST_OBJECT_NAME(message->src);
+  auto* src_name = GST_OBJECT_NAME(message->src);
 
   if (std::strcmp(src_name, "equalizer_input_level") == 0) {
     soe->equalizer_input_level.emit(SourceOutputEffects::get_peak(message));
@@ -41,7 +41,7 @@ SourceOutputEffects::SourceOutputEffects(PulseManager* pulse_manager) : Pipeline
   set_output_sink_name("PulseEffects_mic");
   set_caps(pm->mic_sink_info->rate);
 
-  auto PULSE_SOURCE = std::getenv("PULSE_SOURCE");
+  auto* PULSE_SOURCE = std::getenv("PULSE_SOURCE");
 
   if (PULSE_SOURCE != nullptr) {
     if (pm->get_source_info(PULSE_SOURCE)) {
@@ -123,16 +123,35 @@ SourceOutputEffects::~SourceOutputEffects() {
 void SourceOutputEffects::on_app_added(const std::shared_ptr<AppInfo>& app_info) {
   PipelineBase::on_app_added(app_info);
 
-  auto enable_all = g_settings_get_boolean(settings, "enable-all-sourceoutputs");
+  bool forbidden_app = false;
+  auto* blacklist = g_settings_get_strv(settings, "blacklist-in");
 
-  if ((enable_all != 0) && !app_info->connected) {
-    pm->move_source_output_to_pulseeffects(app_info->name, app_info->index);
+  for (std::size_t i = 0; blacklist[i] != nullptr; i++) {
+    if (app_info->name == blacklist[i]) {
+      forbidden_app = true;
+    }
+
+    g_free(blacklist[i]);
   }
+
+  if (app_info->connected) {
+    if (forbidden_app) {
+      pm->remove_source_output_from_pulseeffects(app_info->name, app_info->index);
+    }
+  } else {
+    auto enable_all = g_settings_get_boolean(settings, "enable-all-sourceoutputs");
+
+    if (!forbidden_app && (enable_all != 0)) {
+      pm->move_source_output_to_pulseeffects(app_info->name, app_info->index);
+    }
+  }
+
+  g_free(blacklist);
 }
 
 void SourceOutputEffects::add_plugins_to_pipeline() {
-  gchar* name;
-  GVariantIter* iter;
+  gchar* name = nullptr;
+  GVariantIter* iter = nullptr;
   std::vector<std::string> default_order;
 
   g_settings_get(child_settings, "plugins", "as", &iter);
@@ -142,7 +161,7 @@ void SourceOutputEffects::add_plugins_to_pipeline() {
     g_free(name);
   }
 
-  auto gvariant = g_settings_get_default_value(child_settings, "plugins");
+  auto* gvariant = g_settings_get_default_value(child_settings, "plugins");
 
   g_variant_get(gvariant, "as", &iter);
 
@@ -177,7 +196,7 @@ void SourceOutputEffects::add_plugins_to_pipeline() {
 
   // adding plugins to effects_bin
 
-  for (auto& p : plugins) {
+  for (const auto& p : plugins) {
     gst_bin_add(GST_BIN(effects_bin), p.second);
   }
 

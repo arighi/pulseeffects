@@ -51,8 +51,8 @@ auto check_update(gpointer user_data) -> bool {
   auto l = static_cast<T>(user_data);
 
   bool update = false;
-  gchar* name;
-  GVariantIter* iter;
+  gchar* name = nullptr;
+  GVariantIter* iter = nullptr;
 
   g_settings_get(l->child_settings, "plugins", "as", &iter);
 
@@ -60,7 +60,7 @@ auto check_update(gpointer user_data) -> bool {
   l->plugins_order.clear();
 
   while (g_variant_iter_next(iter, "s", &name)) {
-    l->plugins_order.push_back(name);
+    l->plugins_order.emplace_back(name);
     g_free(name);
   }
 

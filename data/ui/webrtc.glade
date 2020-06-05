@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.1 -->
+<!-- Generated with glade 3.36.0 -->
 <interface domain="pulseeffects">
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkAdjustment" id="compression_gain_db">
@@ -435,6 +435,7 @@
                             <property name="adjustment">target_level_dbfs</property>
                             <property name="numeric">True</property>
                             <property name="update_policy">if-valid</property>
+                            <property name="value">3</property>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -606,7 +607,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">1</property>
+            <property name="position">0</property>
           </packing>
         </child>
         <child>
@@ -620,7 +621,6 @@
                 <property name="can_focus">False</property>
                 <property name="halign">end</property>
                 <property name="valign">center</property>
-                <property name="margin_right">3</property>
                 <property name="label" translatable="yes">Input</property>
               </object>
               <packing>
@@ -635,7 +635,6 @@
                 <property name="can_focus">False</property>
                 <property name="halign">end</property>
                 <property name="valign">center</property>
-                <property name="margin_right">3</property>
                 <property name="label" translatable="yes">Output</property>
               </object>
               <packing>
@@ -770,6 +769,46 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="halign">end</property>
+            <property name="spacing">4</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Provided by</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label">WebRTC</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
             <property name="position">2</property>
           </packing>
         </child>
@@ -780,11 +819,47 @@
       </packing>
     </child>
     <child>
-      <object class="GtkSwitch" id="enable">
+      <object class="GtkGrid">
         <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="halign">center</property>
-        <property name="valign">center</property>
+        <property name="can_focus">False</property>
+        <property name="column_homogeneous">True</property>
+        <child>
+          <object class="GtkSwitch" id="enable">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="halign">center</property>
+            <property name="valign">center</property>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="plugin_reset">
+            <property name="label" translatable="yes">Reset</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="halign">end</property>
+            <property name="valign">center</property>
+            <property name="image_position">right</property>
+          </object>
+          <packing>
+            <property name="left_attach">2</property>
+            <property name="top_attach">0</property>
+          </packing>
+        </child>
       </object>
       <packing>
         <property name="left_attach">0</property>

@@ -28,6 +28,7 @@ ConvolverUi::ConvolverUi(BaseObjectType* cobject,
   builder->get_widget("samples", label_samples);
   builder->get_widget("duration", label_duration);
   builder->get_widget("show_fft", show_fft);
+  builder->get_widget("plugin_reset", reset_button);
 
   get_object(builder, "input_gain", input_gain);
   get_object(builder, "output_gain", output_gain);
@@ -75,6 +76,9 @@ ConvolverUi::ConvolverUi(BaseObjectType* cobject,
 
   settings->set_boolean("post-messages", true);
 
+  // reset plugin
+  reset_button->signal_clicked().connect([=]() { reset(); });
+
   // irs dir
 
   auto dir_exists = boost::filesystem::is_directory(irs_dir);
@@ -98,13 +102,13 @@ ConvolverUi::ConvolverUi(BaseObjectType* cobject,
 
   auto future = std::async(std::launch::async, f);
 
-  futures.push_back(std::move(future));
+  futures.emplace_back(std::move(future));
 
   /* this is necessary to update the interface with the irs info when a preset
      is loaded
   */
 
-  connections.push_back(settings->signal_changed("kernel-path").connect([=](auto key) {
+  connections.emplace_back(settings->signal_changed("kernel-path").connect([=](auto key) {
     auto f = [=]() {
       std::lock_guard<std::mutex> lock(lock_guard_irs_info);
       get_irs_info();
@@ -112,7 +116,7 @@ ConvolverUi::ConvolverUi(BaseObjectType* cobject,
 
     auto future = std::async(std::launch::async, f);
 
-    futures.push_back(std::move(future));
+    futures.emplace_back(std::move(future));
   }));
 }
 
@@ -122,6 +126,26 @@ ConvolverUi::~ConvolverUi() {
   util::debug(name + " ui destroyed");
 }
 
+void ConvolverUi::reset() {
+  try {
+    std::string section = (preset_type == PresetType::output) ? "output" : "input";
+
+    update_default_key<bool>(settings, "state", section + ".convolver.state");
+
+    update_default_key<double>(settings, "input-gain", section + ".convolver.input-gain");
+
+    update_default_key<double>(settings, "output-gain", section + ".convolver.output-gain");
+
+    update_default_string_key(settings, "kernel-path", section + ".convolver.kernel-path");
+
+    update_default_key<int>(settings, "ir-width", section + ".convolver.ir-width");
+
+    util::debug(name + " plugin: successfully reset");
+  } catch (std::exception& e) {
+    util::debug(name + " plugin: an error occurred during reset process");
+  }
+}
+
 auto ConvolverUi::get_irs_names() -> std::vector<std::string> {
   boost::filesystem::directory_iterator it{irs_dir};
   std::vector<std::string> names;
@@ -129,7 +153,7 @@ auto ConvolverUi::get_irs_names() -> std::vector<std::string> {
   while (it != boost::filesystem::directory_iterator{}) {
     if (boost::filesystem::is_regular_file(it->status())) {
       if (it->path().extension().string() == ".irs") {
-        names.push_back(it->path().stem().string());
+        names.emplace_back(it->path().stem().string());
       }
     }
 
@@ -218,12 +242,12 @@ void ConvolverUi::populate_irs_listbox() {
     row->set_name(name);
     label->set_text(name);
 
-    connections.push_back(remove_btn->signal_clicked().connect([=]() {
+    connections.emplace_back(remove_btn->signal_clicked().connect([=]() {
       remove_irs_file(name);
       populate_irs_listbox();
     }));
 
-    connections.push_back(apply_btn->signal_clicked().connect([=]() {
+    connections.emplace_back(apply_btn->signal_clicked().connect([=]() {
       auto irs_file = irs_dir / boost::filesystem::path{row->get_name() + ".irs"};
 
       settings->set_string("kernel-path", irs_file.string());
@@ -329,18 +353,26 @@ void ConvolverUi::get_irs_info() {
 
   max_time = *std::max_element(time_axis.begin(), time_axis.end());
 
-  // deinterleaving channels and calculating each amplitude in decibel
+  // deinterleaving channels
 
   left_mag.resize(frames_in);
   right_mag.resize(frames_in);
+
+  // ensure that the fft can be computed
+  if (left_mag.size() % 2 != 0)
+    left_mag.emplace_back(0);
+  if (right_mag.size() % 2 != 0)
+    right_mag.emplace_back(0);
 
   left_mag.shrink_to_fit();
   right_mag.shrink_to_fit();
 
   for (uint n = 0; n < frames_in; n++) {
-    left_mag[n] = util::linear_to_db(kernel[2 * n]);
-    right_mag[n] = util::linear_to_db(kernel[2 * n + 1]);
+    left_mag[n] = kernel[2 * n];
+    right_mag[n] = kernel[2 * n + 1];
   }
+
+  get_irs_spectrum(rate);
 
   /*interpolating because we can not plot all the data in the irs file. It
     would be too slow
@@ -378,8 +410,6 @@ void ConvolverUi::get_irs_info() {
     left_mag[n] = (left_mag[n] - min_left) / (max_left - min_left);
     right_mag[n] = (right_mag[n] - min_right) / (max_right - min_right);
   }
-
-  get_irs_spectrum(rate);
 
   // updating interface with ir file info
 
@@ -422,16 +452,12 @@ void ConvolverUi::get_irs_spectrum(const int& rate) {
   std::copy(left_mag.begin(), left_mag.end(), tmp_l.begin());
   std::copy(right_mag.begin(), right_mag.end(), tmp_r.begin());
 
-  gst_fft_f32_window(fft_ctx, tmp_l.data(), GST_FFT_WINDOW_HAMMING);
-  gst_fft_f32_window(fft_ctx, tmp_r.data(), GST_FFT_WINDOW_HAMMING);
-
   gst_fft_f32_fft(fft_ctx, tmp_l.data(), freqdata_l);
   gst_fft_f32_fft(fft_ctx, tmp_r.data(), freqdata_r);
 
   left_spectrum.resize(nfft / 2 + 1);
   right_spectrum.resize(nfft / 2 + 1);
 
-  /* Calculate magnitude in db */
   for (int i = 0; i < nfft / 2 + 1; i++) {
     float v_l;
     float v_r;
@@ -439,32 +465,22 @@ void ConvolverUi::get_irs_spectrum(const int& rate) {
     // left
     v_l = freqdata_l[i].r * freqdata_l[i].r;
     v_l += freqdata_l[i].i * freqdata_l[i].i;
-    v_l /= static_cast<float>(nfft * nfft);
-    v_l = 10.0F * log10(v_l);
-    v_l = (v_l > -120) ? v_l : -120;
+    v_l = std::sqrt(v_l);
 
     left_spectrum[i] = v_l;
 
     // right
     v_r = freqdata_r[i].r * freqdata_r[i].r;
     v_r += freqdata_r[i].i * freqdata_r[i].i;
-    v_r /= static_cast<float>(nfft * nfft);
-    v_r = 10.0F * log10(v_r);
-    v_r = (v_r > -120) ? v_r : -120;
+    v_r = std::sqrt(v_r);
 
     right_spectrum[i] = v_r;
   }
 
-  uint max_points;
+  uint max_points = std::min((uint)left_spectrum.size(), max_plot_points);
 
-  if (left_spectrum.size() > max_plot_points) {
-    max_points = max_plot_points;
-  } else {
-    max_points = left_spectrum.size();
-  }
-
-  fft_min_freq = static_cast<float>(rate) * (0.5F * 0 + 0.25F) / left_spectrum.size();
-  fft_max_freq = static_cast<float>(rate) * (0.5F * (left_spectrum.size() - 1.0F) + 0.25F) / left_spectrum.size();
+  fft_min_freq = 1;
+  fft_max_freq = 0.5f * static_cast<float>(rate);
 
   freq_axis = util::logspace(log10(fft_min_freq), log10(fft_max_freq), max_points);
 
@@ -565,8 +581,8 @@ void ConvolverUi::draw_channel(Gtk::DrawingArea* da,
         msg << std::fixed << mouse_time << " s, ";
       }
 
-      msg.precision(0);
-      msg << std::fixed << mouse_intensity << " dB";
+      msg.precision(3);
+      msg << std::fixed << mouse_intensity;
 
       int text_width;
       int text_height;
@@ -588,38 +604,38 @@ void ConvolverUi::update_mouse_info_L(GdkEventMotion* event) {
   auto height = allocation.get_height();
 
   if (show_fft_spectrum) {
-    mouse_freq = static_cast<float>(event->x) * fft_max_freq / width;
+    float fft_min_freq_log = log10(fft_min_freq);
+    float fft_max_freq_log = log10(fft_max_freq);
+    float mouse_freq_log = static_cast<float>(event->x) / width * (fft_max_freq_log - fft_min_freq_log) + fft_min_freq_log;
 
-    // intensity scale is in decibel
+    mouse_freq = exp10(mouse_freq_log);
 
-    mouse_intensity = fft_max_left - static_cast<float>(event->y) * (fft_max_left - fft_min_left) / height;
+    mouse_intensity = (height - static_cast<float>(event->y)) / height * (fft_max_left - fft_min_left) + fft_min_left;
   } else {
     mouse_time = static_cast<float>(event->x) * max_time / width;
 
-    // intensity scale is in decibel
-
-    mouse_intensity = max_left - static_cast<float>(event->y) * (max_left - min_left) / height;
+    mouse_intensity = (height - static_cast<float>(event->y)) / height * (max_left - min_left) + min_left;
   }
 }
 
 void ConvolverUi::update_mouse_info_R(GdkEventMotion* event) {
-  auto allocation = left_plot->get_allocation();
+  auto allocation = right_plot->get_allocation();
 
   auto width = allocation.get_width();
   auto height = allocation.get_height();
 
   if (show_fft_spectrum) {
-    mouse_freq = static_cast<float>(event->x) * fft_max_freq / width;
+    float fft_min_freq_log = log10(fft_min_freq);
+    float fft_max_freq_log = log10(fft_max_freq);
+    float mouse_freq_log = static_cast<float>(event->x) / width * (fft_max_freq_log - fft_min_freq_log) + fft_min_freq_log;
 
-    // intensity scale is in decibel
+    mouse_freq = exp10(mouse_freq_log);
 
-    mouse_intensity = fft_max_right - static_cast<float>(event->y) * (fft_max_right - fft_min_right) / height;
+    mouse_intensity = (height - static_cast<float>(event->y)) / height * (fft_max_right - fft_min_right) + fft_min_right;
   } else {
     mouse_time = static_cast<float>(event->x) * max_time / width;
 
-    // intensity scale is in decibel
-
-    mouse_intensity = max_right - static_cast<float>(event->y) * (max_right - min_right) / height;
+    mouse_intensity = static_cast<float>(event->y) / height * (max_right - min_right) + min_right;
   }
 }
 

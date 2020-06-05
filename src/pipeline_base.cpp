@@ -120,7 +120,7 @@ void on_message_element(const GstBus* gst_bus, GstMessage* message, PipelineBase
     magnitudes = gst_structure_get_value(s, "magnitude");
 
     for (uint n = 0; n < pb->spectrum_freqs.size(); n++) {
-      pb->spectrum_mag_tmp[n] = g_value_get_float(gst_value_list_get_value(magnitudes, n));
+      pb->spectrum_mag_tmp[n] = g_value_get_float(gst_value_list_get_value(magnitudes, n + pb->spectrum_start_index));
     }
 
     try {
@@ -517,7 +517,7 @@ void PipelineBase::set_null_pipeline() {
 auto PipelineBase::apps_want_to_play() -> bool {
   bool wants_to_play = false;
 
-  for (auto& a : apps_list) {
+  for (const auto& a : apps_list) {
     if (a->wants_to_play) {
       wants_to_play = true;
 
@@ -589,7 +589,7 @@ void PipelineBase::on_app_added(const std::shared_ptr<AppInfo>& app_info) {
     }
   }
 
-  apps_list.push_back(app_info);
+  apps_list.emplace_back(app_info);
 
   update_pipeline_state();
 }
@@ -646,7 +646,11 @@ void PipelineBase::init_spectrum(const uint& sampling_rate) {
     }
 
     if (f > min_spectrum_freq) {
-      spectrum_freqs.push_back(f);
+      spectrum_freqs.emplace_back(f);
+
+      if (spectrum_start_index == 0) {
+        spectrum_start_index = n;
+      }
     }
   }
 

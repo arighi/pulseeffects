@@ -18,8 +18,10 @@ class DeesserUi : public Gtk::Grid, public PluginUiBase {
   void on_new_compression(double value);
   void on_new_detected(double value);
 
+  void reset() override;
+
  private:
-  Glib::RefPtr<Gtk::Adjustment> threshold, ratio, makeup, f1_freq, f2_freq, f1_level, f2_level, f2_q;
+  Glib::RefPtr<Gtk::Adjustment> threshold, ratio, makeup, f1_freq, f2_freq, f1_level, f2_level, f2_q, laxity;
 
   Gtk::LevelBar *compression = nullptr, *detected = nullptr;
   Gtk::Label *compression_label = nullptr, *detected_label = nullptr;
