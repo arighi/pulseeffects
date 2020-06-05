@@ -130,13 +130,13 @@ void AutoGain::bind_to_gsettings() {
 
   g_settings_bind(settings, "weight-i", autogain, "weight-i", G_SETTINGS_BIND_DEFAULT);
 
-  g_settings_bind(settings, "staticv", autogain, "staticv", G_SETTINGS_BIND_DEFAULT);
+  g_settings_bind(settings, "custom-integrated-value", autogain, "staticv", G_SETTINGS_BIND_DEFAULT);
 
   g_settings_bind(settings, "detect-silence", autogain, "detect-silence", G_SETTINGS_BIND_DEFAULT);
 
   g_settings_bind(settings, "use-geometric-mean", autogain, "use-geometric-mean", G_SETTINGS_BIND_DEFAULT);
 
-  g_settings_bind(settings, "use-static-integrated-value", autogain, "use-static-integrated-value",
+  g_settings_bind(settings, "use-custom-integrated-value", autogain, "use-custom-integrated-value",
                   G_SETTINGS_BIND_DEFAULT);
 
   g_settings_bind(settings, "reset", autogain, "reset", G_SETTINGS_BIND_DEFAULT);

@@ -43,5 +43,12 @@
         <key name="use-geometric-mean" type="b">
             <default>true</default>
         </key>
+        <key name="use-custom-integrated-value" type="b">
+            <default>true</default>
+        </key>
+        <key name="custom-integrated-value" type="d">
+            <range min="-99.0" max="0.0" />
+            <default>-12.0</default>
+        </key>
     </schema>
 </schemalist>
