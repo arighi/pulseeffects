@@ -1,13 +1,18 @@
 #!/usr/bin/make -f
-export DH_VERBOSE=255
+# See debhelper(7) (uncomment to enable)
+# output every command that modifies files on the build system.
+#export DH_VERBOSE = 1
 
-# Fail the build if some produced files
-# are not included in neither of multiple packages
-override_dh_missing:
-	dh_missing --fail-missing
 
-override_dh_auto_test:
-	echo "Auto-tests are disabled due to a very strange issue https://github.com/wwmm/pulseeffects/issues/304"
+# see FEATURE AREAS in dpkg-buildflags(1)
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+# see ENVIRONMENT in dpkg-buildflags(1)
+# package maintainers to append CFLAGS
+#export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic
+# package maintainers to append LDFLAGS
+export DEB_LDFLAGS_MAINT_APPEND =
+
 
 %:
 	dh $@ --with scour

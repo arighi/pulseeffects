@@ -1,0 +1,26 @@
+From dd2703eb02bb03f685c5c10e470ac482d57fee73 Mon Sep 17 00:00:00 2001
+From: Andrea Righi <andrea.righi@canonical.com>
+Date: Sat, 19 Sep 2020 07:51:27 +0200
+Subject: [PATCH 1/2] lower boost version requirement to 1.71
+
+Signed-off-by: Andrea Righi <andrea.righi@canonical.com>
+---
+ src/meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/meson.build b/src/meson.build
+index e1c3c4c6..935eb51d 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -106,7 +106,7 @@ pulseeffects_deps = [
+ 	dependency('gstreamer-fft-1.0'),
+ 	dependency('lilv-0', version: '>=0.22', required: false),
+ 	dependency('libbs2b', required: false),
+-	dependency('boost', version: '>=1.72', modules:['system','filesystem']),
++	dependency('boost', version: '>=1.71', modules:['system','filesystem']),
+ 	dependency('sndfile'),
+ 	dependency('threads')
+ ]
+-- 
+2.27.0
+

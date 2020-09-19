@@ -1,0 +1,127 @@
+From 5e57b33ab101be457da5fb1d5feef52b14803c1f Mon Sep 17 00:00:00 2001
+From: Andrea Righi <andrea.righi@canonical.com>
+Date: Sat, 19 Sep 2020 07:53:00 +0200
+Subject: [PATCH 2/2] Revert "do not use deprecated Boost headers"
+
+This reverts commit a363d7fa06003b508b55ba12fa6eab98718d94d6.
+
+Signed-off-by: Andrea Righi <andrea.righi@canonical.com>
+---
+ src/calibration_mic.cpp     |  6 +++---
+ src/calibration_signals.cpp |  6 +++---
+ src/convolver_ui.cpp        | 12 +++++-------
+ src/pipeline_base.cpp       |  6 +++---
+ 4 files changed, 14 insertions(+), 16 deletions(-)
+
+diff --git a/src/calibration_mic.cpp b/src/calibration_mic.cpp
+index 73525d02..4639c4de 100644
+--- a/src/calibration_mic.cpp
++++ b/src/calibration_mic.cpp
+@@ -1,6 +1,6 @@
+ #include "calibration_mic.hpp"
+ #include <glibmm/main.h>
+-#include <boost/math/interpolators/cardinal_cubic_b_spline.hpp>
++#include <boost/math/interpolators/cubic_b_spline.hpp>
+ #include "util.hpp"
+ 
+ namespace {
+@@ -28,8 +28,8 @@ void on_message_element(const GstBus* gst_bus, GstMessage* message, CalibrationM
+       cs->spectrum_mag_tmp[n] = g_value_get_float(gst_value_list_get_value(magnitudes, n));
+     }
+ 
+-    boost::math::interpolators::cardinal_cubic_b_spline<float> spline(
+-        cs->spectrum_mag_tmp.begin(), cs->spectrum_mag_tmp.end(), cs->spline_f0, cs->spline_df);
++    boost::math::cubic_b_spline<float> spline(cs->spectrum_mag_tmp.begin(), cs->spectrum_mag_tmp.end(), cs->spline_f0,
++                                              cs->spline_df);
+ 
+     for (uint n = 0u; n < cs->spectrum_mag.size(); n++) {
+       cs->spectrum_mag[n] = spline(cs->spectrum_x_axis[n]);
+diff --git a/src/calibration_signals.cpp b/src/calibration_signals.cpp
+index 3311d181..e70fbe1c 100644
+--- a/src/calibration_signals.cpp
++++ b/src/calibration_signals.cpp
+@@ -1,6 +1,6 @@
+ #include "calibration_signals.hpp"
+ #include <glibmm/main.h>
+-#include <boost/math/interpolators/cardinal_cubic_b_spline.hpp>
++#include <boost/math/interpolators/cubic_b_spline.hpp>
+ #include "util.hpp"
+ 
+ namespace {
+@@ -28,8 +28,8 @@ void on_message_element(const GstBus* gst_bus, GstMessage* message, CalibrationS
+       cs->spectrum_mag_tmp[n] = g_value_get_float(gst_value_list_get_value(magnitudes, n));
+     }
+ 
+-    boost::math::interpolators::cardinal_cubic_b_spline<float> spline(
+-        cs->spectrum_mag_tmp.begin(), cs->spectrum_mag_tmp.end(), cs->spline_f0, cs->spline_df);
++    boost::math::cubic_b_spline<float> spline(cs->spectrum_mag_tmp.begin(), cs->spectrum_mag_tmp.end(), cs->spline_f0,
++                                              cs->spline_df);
+ 
+     for (uint n = 0u; n < cs->spectrum_mag.size(); n++) {
+       cs->spectrum_mag[n] = spline(cs->spectrum_x_axis[n]);
+diff --git a/src/convolver_ui.cpp b/src/convolver_ui.cpp
+index 024ae36d..48eb606e 100644
+--- a/src/convolver_ui.cpp
++++ b/src/convolver_ui.cpp
+@@ -3,7 +3,7 @@
+ #include <glibmm/i18n.h>
+ #include <gst/fft/gstfftf32.h>
+ #include <gtkmm/filechoosernative.h>
+-#include <boost/math/interpolators/cardinal_cubic_b_spline.hpp>
++#include <boost/math/interpolators/cubic_b_spline.hpp>
+ #include <sndfile.hh>
+ #include "gtkmm/dialog.h"
+ // #include "gtkmm/window.h"
+@@ -378,9 +378,9 @@ void ConvolverUi::get_irs_info() {
+   */
+ 
+   try {
+-    boost::math::interpolators::cardinal_cubic_b_spline<float> spline_L(left_mag.begin(), left_mag.end(), 0.0F, dt);
++    boost::math::cubic_b_spline<float> spline_L(left_mag.begin(), left_mag.end(), 0.0f, dt);
+ 
+-    boost::math::interpolators::cardinal_cubic_b_spline<float> spline_R(right_mag.begin(), right_mag.end(), 0.0F, dt);
++    boost::math::cubic_b_spline<float> spline_R(right_mag.begin(), right_mag.end(), 0.0f, dt);
+ 
+     left_mag.resize(max_points);
+     right_mag.resize(max_points);
+@@ -490,11 +490,9 @@ void ConvolverUi::get_irs_spectrum(const int& rate) {
+   try {
+     float dF = 0.5F * static_cast<float>(rate) / left_spectrum.size();
+ 
+-    boost::math::interpolators::cardinal_cubic_b_spline<float> spline_L(left_spectrum.begin(), left_spectrum.end(),
+-                                                                        0.0F, dF);
++    boost::math::cubic_b_spline<float> spline_L(left_spectrum.begin(), left_spectrum.end(), 0.0f, dF);
+ 
+-    boost::math::interpolators::cardinal_cubic_b_spline<float> spline_R(right_spectrum.begin(), right_spectrum.end(),
+-                                                                        0.0F, dF);
++    boost::math::cubic_b_spline<float> spline_R(right_spectrum.begin(), right_spectrum.end(), 0.0f, dF);
+ 
+     left_spectrum.resize(max_points);
+     right_spectrum.resize(max_points);
+diff --git a/src/pipeline_base.cpp b/src/pipeline_base.cpp
+index 30e53fb5..77255a14 100644
+--- a/src/pipeline_base.cpp
++++ b/src/pipeline_base.cpp
+@@ -2,7 +2,7 @@
+ #include <glib-object.h>
+ #include <gobject/gvaluecollector.h>
+ #include <sys/resource.h>
+-#include <boost/math/interpolators/cardinal_cubic_b_spline.hpp>
++#include <boost/math/interpolators/cubic_b_spline.hpp>
+ #include "config.h"
+ #include "gst/gstelement.h"
+ #include "gst/gstmessage.h"
+@@ -132,8 +132,8 @@ void on_message_element(const GstBus* gst_bus, GstMessage* message, PipelineBase
+     }
+ 
+     try {
+-      boost::math::interpolators::cardinal_cubic_b_spline<float> spline(
+-          pb->spectrum_mag_tmp.begin(), pb->spectrum_mag_tmp.end(), pb->spline_f0, pb->spline_df);
++      boost::math::cubic_b_spline<float> spline(pb->spectrum_mag_tmp.begin(), pb->spectrum_mag_tmp.end(), pb->spline_f0,
++                                                pb->spline_df);
+ 
+       for (uint n = 0U; n < pb->spectrum_mag.size(); n++) {
+         pb->spectrum_mag[n] = spline(pb->spectrum_x_axis[n]);
+-- 
+2.27.0
+

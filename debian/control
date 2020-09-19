@@ -1,98 +1,116 @@
 Source: pulseeffects
 Section: sound
 Priority: optional
-Maintainer: Mikhail Novosyolov <mikhailnov@dumalogiya.ru>
-Standards-Version: 4.1.4
+Maintainer: Debian Multimedia Maintainers <debian-multimedia@lists.debian.org>
+Uploaders:
+ Boyuan Yang <byang@debian.org>,
+Build-Depends:
+ appstream-util,
+ debhelper-compat (= 13),
+ desktop-file-utils,
+ itstool,
+ libboost-filesystem-dev (>= 1.65),
+ libboost-system-dev (>= 1.65),
+ libbs2b-dev,
+ libebur128-dev,
+ libglibmm-2.4-dev,
+ libgstreamer-plugins-bad1.0-dev,
+ libgstreamer1.0-dev (>= 1.12.5),
+ libgtk-3-dev,
+ libgtkmm-3.0-dev,
+ liblilv-dev,
+ libpango1.0-dev,
+ libpulse-dev,
+ librubberband-dev,
+ libsamplerate0-dev,
+ libsndfile1-dev,
+ libzita-convolver-dev,
+ meson (>= 0.40),
+ pkg-config,
+ scour,
+Standards-Version: 4.5.0
+Rules-Requires-Root: no
 Homepage: https://github.com/wwmm/pulseeffects
-Build-Depends: debhelper (>=11),
-               scour,
-               meson (>=0.40),
-               pkg-config,
-               libgstreamer1.0-dev (>= 1.12.5),
-               libgstreamer-plugins-bad1.0-dev,
-               libpulse-dev,
-               libpango1.0-dev,
-               libgtk-3-dev,
-               libglibmm-2.4-dev,
-               libgtkmm-3.0-dev,
-               libboost-filesystem-dev (>= 1.72) | libboost-filesystem1.72-dev,
-               libboost-system-dev (>= 1.72) | libboost-system1.72-dev,
-               libbs2b-dev,
-               liblilv-dev,
-               librubberband-dev,
-               libzita-convolver-dev,
-               libsndfile1-dev,
-               libsamplerate0-dev,
-               itstool,
-               libebur128-dev,
-               appstream-util,
-               desktop-file-utils
-
-Package: pulseeffects
-Architecture: any
-Depends: ${misc:Depends},
-         ${shlibs:Depends},
-         pulseaudio,
-         gstreamer1.0-plugins-bad,
-         gstreamer1.0-plugins-good,
-         gir1.2-gst-plugins-bad-1.0,
-         gstreamer1.0-pulseaudio,
-         gstreamer1.0-adapter-pulseeffects
-# gstreamer1.0-adapter-pulseeffects is a strict dependency, not recommended
-# see https://github.com/wwmm/pulseeffects/issues/307#issuecomment-415078508
-Recommends: calf-plugins (>= 0.90.0),
-            zam-plugins,
-            rubberband-ladspa,
-            liblilv-0-0,
-            mda-lv2,
-            lsp-plugins-lv2 (>= 1.1.14) | lsp-plugins (>= 1.1.14),
-            gstreamer1.0-convolver-pulseeffects,
-            gstreamer1.0-crystalizer-pulseeffects,
-            gstreamer1.0-autogain-pulseeffects
-Description: Sound input and output effects for PulseAudio
- Many sound effects for PulseAudio input and output.
-
-Package: gstreamer1.0-convolver-pulseeffects
-Architecture: any
-Multi-Arch: same
-Depends: ${misc:Depends},
-         ${shlibs:Depends}
-Provides: peconvolver, gstreamer1.0-convolver
-Replaces: pulseeffects (<< 4.1.7-3)
-Description: Gstreamer convolver
- Simple Gstreamer crystalizer plugin based on
- the library Zita-convolver.
-
-Package: gstreamer1.0-crystalizer-pulseeffects
-Architecture: any
-Multi-Arch: same
-Depends: ${misc:Depends},
-         ${shlibs:Depends}
-Provides: pecrystalizer, gstreamer1.0-crystalizer
-Description: Gstreamer crystalizer
- Simple Gstreamer plugin useful to add more dynamic range
- to songs that were overly compressed.
-
-Package: gstreamer1.0-autogain-pulseeffects
-Architecture: any
-Multi-Arch: same
-Depends: ${misc:Depends},
-         ${shlibs:Depends}
-Provides: peautogain, gstreamer1.0-autogain
-Description: Gstreamer crystalizer
- Simple Gstreamer plugin that changes audio gain
- to match the levels recommended by the ebur128 standard.
+Vcs-Git: https://salsa.debian.org/debian/pulseeffects.git
+Vcs-Browser: https://salsa.debian.org/debian/pulseeffects
 
 Package: gstreamer1.0-adapter-pulseeffects
 Architecture: any
 Multi-Arch: same
-Depends: ${misc:Depends},
-         ${shlibs:Depends}
-Provides: peadapter, gstreamer1.0-adapter
-Description: Gstreamer adapter
- Simple plugin that gives output buffers
- with the desired number of samples.
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: GStreamer adapter plugin
+ Simple plugin that gives output buffers with the desired number of
+ samples.
  .
- It is used in PulseEffects to ensure that
- the number of audio samples in the buffer
- is a power of 2. The convolver needs this.
+ It is used in PulseEffects to ensure that the number of audio samples
+ in the buffer is a power of 2. The convolver also needs it.
+ .
+ This package is part of the PulseEffects project.
+
+Package: gstreamer1.0-autogain-pulseeffects
+Architecture: any
+Multi-Arch: same
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: GStreamer autogain plugin
+ Simple GStreamer plugin that changes audio gain to match the levels
+ recommended by the ebur128 standard.
+ .
+ This package is part of the PulseEffects project.
+
+Package: gstreamer1.0-convolver-pulseeffects
+Architecture: any
+Multi-Arch: same
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Replaces:
+ pulseeffects (<< 4.1.7-3),
+Description: GStreamer convolver plugin
+ Simple GStreamer crystalizer plugin based on the library of
+ Zita-convolver.
+ .
+ This package is part of the PulseEffects project.
+
+Package: gstreamer1.0-crystalizer-pulseeffects
+Architecture: any
+Multi-Arch: same
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: GStreamer crystalizer plugin
+ Simple GStreamer plugin, useful to add more dynamic range
+ to songs that were overly compressed.
+ .
+ This package is part of the PulseEffects project.
+
+Package: pulseeffects
+Architecture: any
+Depends:
+ gir1.2-gst-plugins-bad-1.0,
+ gstreamer1.0-adapter-pulseeffects,
+ gstreamer1.0-plugins-bad,
+ gstreamer1.0-plugins-good,
+ gstreamer1.0-pulseaudio,
+ pulseaudio,
+ ${misc:Depends},
+ ${shlibs:Depends},
+Recommends:
+ calf-plugins (>= 0.90.0),
+ gstreamer1.0-autogain-pulseeffects,
+ gstreamer1.0-convolver-pulseeffects,
+ gstreamer1.0-crystalizer-pulseeffects,
+ liblilv-0-0,
+ lsp-plugins-lv2 (>= 1.1.24~) | lsp-plugins (>= 1.1.24~),
+ rubberband-ladspa,
+ zam-plugins,
+Description: Audio effects for PulseAudio applications
+ PulseEffects is an advanced system-wide equalizer that works with
+ PulseAudio. It can apply system-wide effects to all running application
+ or selected apps.
+ .
+ PulseEffects also provides many pre-defined sound effects for PulseAudio
+ input and output.
